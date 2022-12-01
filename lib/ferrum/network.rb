@@ -60,12 +60,18 @@ module Ferrum
     #   browser.network.wait_for_idle
     #
     def wait_for_idle(connections: 0, duration: 0.05, timeout: @page.browser.timeout)
+      puts "Ferrum: wait_for_idle: connections: #{connections} duration: #{duration} timeout: #{timeout}"
       start = Utils::ElapsedTime.monotonic_time
 
-      until idle?(connections)
-        raise TimeoutError if Utils::ElapsedTime.timeout?(start, timeout)
+      begin
+        until idle?(connections)
+          raise TimeoutError if Utils::ElapsedTime.timeout?(start, timeout)
 
-        sleep(duration)
+          sleep(duration)
+        end
+      rescue TimeoutError
+        @traffic.each{ |r| pp r if r.pending?};
+        raise TimeoutError
       end
     end
 
