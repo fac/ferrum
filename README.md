@@ -1,3 +1,8 @@
+# `fac/ferrum fork`
+Forked from the upstream v0.13.0 tag commit, rather than `main`, since it's causing 302 redirect failures.
+
+***
+
 # Ferrum - high-level API to control Chrome in Ruby
 
 <img align="right"
