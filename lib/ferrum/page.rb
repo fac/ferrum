@@ -282,7 +282,7 @@ module Ferrum
         @event.wait(wait)
         if iteration != @event.iteration
           set = @event.wait(timeout)
-          raise TimeoutError unless set
+          raise TimeoutError.new() unless set
         end
       end
       result
