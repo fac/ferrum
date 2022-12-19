@@ -67,6 +67,7 @@ module Ferrum
           if @page.browser.options.pending_connection_errors
             pendings = traffic.select(&:pending?)
             pending_urls = pendings.map(&:url).compact
+            puts("[DEBUG] 'wait_for_idle' pending connections:\n#{pendings.map(&:inspect)}")
           end
           raise TimeoutError.new(pending_urls = pending_urls)
         end
