@@ -67,7 +67,7 @@ module Ferrum
           if @page.browser.options.pending_connection_errors
             pending_connections = traffic.select(&:pending?)
             pending_connections_info = pending_connections.map(&:response).map do |connection|
-              {staus: connection.status, status_text: connection.status_text, url: connection.url } unless connection.nil?
+              {status: connection.status, status_text: connection.status_text, url: connection.url } unless connection.nil?
             end
           end
           raise TimeoutError.new(pending_connections_info = pending_connections_info)
