@@ -65,11 +65,12 @@ module Ferrum
       until idle?(connections)
         if Utils::ElapsedTime.timeout?(start, timeout)
           if @page.browser.options.pending_connection_errors
-            pendings = traffic.select(&:pending?)
-            pending_urls = pendings.map(&:url).compact
-            puts("[DEBUG] 'wait_for_idle' pending connections:\n#{pendings.map(&:inspect)}")
+            pending_connections = traffic.select(&:pending?)
+            pending_connections_info = pending_connections.map(&:response).map do |connection|
+              {staus: connection.status, status_text: connection.status_text, url: connection.url } unless connection.nil?
+            end
           end
-          raise TimeoutError.new(pending_urls = pending_urls)
+          raise TimeoutError.new(pending_connections_info = pending_connections_info)
         end
 
         sleep(duration)
