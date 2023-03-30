@@ -42,12 +42,31 @@ module Ferrum
         data = pending.value!(@connectable.timeout)
         @pendings.delete(message[:id])
 
+        log_command(method, message, data, @pendings)
         raise DeadBrowserError if data.nil? && @ws.messages.closed?
         raise TimeoutError unless data
 
         error, response = data.values_at("error", "result")
         raise_browser_error(error) if error
         response
+      rescue DeadBrowserError, TimeoutError => error
+        log_command(method, message, data, @pendings, error)
+        raise error
+      end
+
+      def log_command(method, message, data, pendings, error = nil)
+        puts "-----"
+        if error
+          puts "#{self.class.name} - ERROR #{error}"
+        else
+          puts "#{self.class.name} - SUCCESS"
+        end
+
+        puts "method: #{method}"
+        puts "message: #{message}"
+        puts "data: #{data}"
+        puts "pendings: #{pendings}"
+        puts "-----"
       end
 
       def on(event, &block)
