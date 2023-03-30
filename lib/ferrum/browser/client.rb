@@ -42,7 +42,7 @@ module Ferrum
         data = pending.value!(@connectable.timeout)
         @pendings.delete(message[:id])
 
-        log_command(method, message, data, @pendings)
+        log_command(method, message, data, @pendings) if ENV["LOG_ALL_FERRUM_COMMANDS"]
         raise DeadBrowserError if data.nil? && @ws.messages.closed?
         raise TimeoutError unless data
 
