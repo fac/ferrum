@@ -96,7 +96,15 @@ module Ferrum
           end
 
           env = Hash(@xvfb&.to_env).merge(@env)
+
+          puts "Starting Chromium"
+          puts "---"
+          puts env, *@command.to_a, process_options
+          puts "---"
+
           @pid = ::Process.spawn(env, *@command.to_a, process_options)
+          puts "Chromium started with PID: #{pid}"
+
           ObjectSpace.define_finalizer(self, self.class.process_killer(@pid))
 
           parse_ws_url(read_io, @process_timeout)
