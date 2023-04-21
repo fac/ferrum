@@ -90,6 +90,10 @@ module Ferrum
           process_options[:pgroup] = true unless Utils::Platform.windows?
           process_options[:out] = process_options[:err] = write_io
 
+          user = Etc.getpwnam('freeagent')
+          process_options[:uid] = user.uid
+          process_options[:gid] = user.gid
+
           if @command.xvfb?
             @xvfb = Xvfb.start(@command.options)
             ObjectSpace.define_finalizer(self, self.class.process_killer(@xvfb.pid))
