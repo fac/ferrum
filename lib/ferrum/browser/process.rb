@@ -101,8 +101,6 @@ module Ferrum
 
           parse_ws_url(read_io, @process_timeout)
           parse_browser_versions
-        ensure
-          close_io(read_io, write_io)
         end
       end
 
