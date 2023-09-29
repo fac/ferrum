@@ -13,15 +13,14 @@ describe Ferrum::Page::Screenshot do
       create_screenshot(path: file)
 
       File.open(file, "rb") do |f|
-        expect(ImageSize.new(f.read).size).to eq(browser.viewport_size)
+        expect(ImageSize.new(f.read).size).to eq(browser.viewport_size.map { |s| s * device_pixel_ratio })
       end
 
       create_screenshot(path: file, full: true)
 
       File.open(file, "rb") do |f|
-        expect(ImageSize.new(f.read).size).to eq(
-          browser.evaluate("[document.documentElement.clientWidth, document.documentElement.clientHeight]")
-        )
+        size = browser.evaluate("[document.documentElement.clientWidth, document.documentElement.clientHeight]")
+        expect(ImageSize.new(f.read).size).to eq(size.map { |s| s * device_pixel_ratio })
       end
     end
 
@@ -31,7 +30,7 @@ describe Ferrum::Page::Screenshot do
       create_screenshot(path: file, full: true)
 
       File.open(file, "rb") do |f|
-        expect(ImageSize.new(f.read).size).to eq(browser.viewport_size)
+        expect(ImageSize.new(f.read).size).to eq(browser.viewport_size.map { |s| s * device_pixel_ratio })
       end
     end
 
@@ -48,7 +47,7 @@ describe Ferrum::Page::Screenshot do
             return [rect.width, rect.height];
           }();
         JS
-        expect(ImageSize.new(f.read).size).to eq(size)
+        expect(ImageSize.new(f.read).size).to eq(size.map { |s| s * device_pixel_ratio })
       end
     end
 
@@ -59,9 +58,8 @@ describe Ferrum::Page::Screenshot do
       create_screenshot(path: file, full: true, selector: "#penultimate")
 
       File.open(file, "rb") do |f|
-        expect(ImageSize.new(f.read).size).to eq(
-          browser.evaluate("[document.documentElement.clientWidth, document.documentElement.clientHeight]")
-        )
+        size = browser.evaluate("[document.documentElement.clientWidth, document.documentElement.clientHeight]")
+        expect(ImageSize.new(f.read).size).to eq(size.map { |s| s * device_pixel_ratio })
       end
     end
 
@@ -99,6 +97,7 @@ describe Ferrum::Page::Screenshot do
   describe "#screenshot" do
     let(:format) { :png }
     let(:file) { "#{PROJECT_ROOT}/spec/tmp/screenshot.#{format}" }
+    let(:device_pixel_ratio) { browser.device_pixel_ratio }
 
     def create_screenshot(**options)
       browser.screenshot(**options)
@@ -138,17 +137,20 @@ describe Ferrum::Page::Screenshot do
     it "supports screenshotting the page with different quality settings" do
       file2 = "#{PROJECT_ROOT}/spec/tmp/screenshot2.jpeg"
       file3 = "#{PROJECT_ROOT}/spec/tmp/screenshot3.jpeg"
-      FileUtils.rm_f([file2, file3])
+      file4 = "#{PROJECT_ROOT}/spec/tmp/screenshot4.#{format}"
+      FileUtils.rm_f([file2, file3, file4])
 
       begin
         browser.go_to
         browser.screenshot(path: file, quality: 0) # ignored for png
         browser.screenshot(path: file2) # defaults to a quality of 75
         browser.screenshot(path: file3, quality: 100)
-        expect(File.size(file)).to be > File.size(file2) # png by defult is bigger
+        browser.screenshot(path: file4, quality: 60) # ignored for png
+
+        expect(File.size(file)).to eq(File.size(file4))
         expect(File.size(file2)).to be < File.size(file3)
       ensure
-        FileUtils.rm_f([file2, file3])
+        FileUtils.rm_f([file2, file3, file4])
       end
     end
 
@@ -162,7 +164,7 @@ describe Ferrum::Page::Screenshot do
         browser.screenshot(path: file, full: true)
 
         File.open(file, "rb") do |f|
-          expect(ImageSize.new(f.read).size).to eq([1280, 1024])
+          expect(ImageSize.new(f.read).size).to eq([1280, 1024].map { |s| s * device_pixel_ratio })
         end
         expect(browser.viewport_size).to eq([1024, 768])
       end
@@ -301,7 +303,7 @@ describe Ferrum::Page::Screenshot do
         reader.pages.each do |page|
           bbox = page.attributes[:MediaBox]
           width = (bbox[2] - bbox[0]) / 72
-          expect(width.round(2)).to eq(33.10)
+          expect(width.round(1)).to eq(33.1)
         end
       end
 

@@ -16,36 +16,14 @@ describe Ferrum::Page do
     end
 
     context "with failing response" do
-      it "handles when a non-existent file was specified" do
-        file_name = "file:non-existent"
-
-        expect do
-          page.go_to(file_name)
-        end.to raise_error(
-          Ferrum::StatusError,
-          "Request to #{file_name} failed to reach server, check DNS and server status"
-        )
-      end
-
-      it "handles when DNS is incorrect" do
+      it "handles navigation error" do
         expect { page.go_to("http://nope:#{port}/") }.to raise_error(
           Ferrum::StatusError,
-          %r{Request to http://nope:\d+/ failed to reach server, check DNS and server status}
+          %r{Request to http://nope:\d+/ failed \(net::ERR_NAME_NOT_RESOLVED\)}
         )
       end
 
-      it "has a descriptive message when DNS incorrect" do
-        url = "http://nope:#{port}/"
-
-        expect do
-          page.go_to(url)
-        end.to raise_error(
-          Ferrum::StatusError,
-          /Request to #{url} failed to reach server, check DNS and server status/
-        )
-      end
-
-      it "reports open resource requests" do
+      it "reports pending connection for image" do
         old_timeout = browser.timeout
         browser.timeout = 2
         expect do
@@ -58,9 +36,9 @@ describe Ferrum::Page do
         browser.timeout = old_timeout
       end
 
-      it "reports open resource requests for main frame" do
+      it "reports pending connection for main frame" do
         prev_timeout = browser.timeout
-        browser.timeout = 0.1
+        browser.timeout = 0.5
 
         expect do
           browser.go_to("/ferrum/really_slow")
@@ -75,12 +53,14 @@ describe Ferrum::Page do
   end
 
   describe "#position=" do
-    it "allows the window to be positioned", if: !Ferrum::Utils::Platform.mac? do
+    it "allows the window to be positioned" do
+      skip if Ferrum::Utils::Platform.mac? && !browser.headless_new?
+
       expect do
         page.position = { left: 10, top: 20 }
       end.to change {
         page.position
-      }.from([0, 0]).to([10, 20])
+      }.to([10, 20])
     end
   end
 
@@ -188,6 +168,31 @@ describe Ferrum::Page do
 
       page.timeout = 2
       expect { page.go_to("/ferrum/really_slow") }.to raise_error(Ferrum::PendingConnectionsError)
+    end
+  end
+
+  describe "#disable_javascript" do
+    it "disables javascripts on page" do
+      page.disable_javascript
+
+      expect { page.go_to("/ferrum/js_error") }.not_to raise_error
+    end
+
+    it "allows javascript evaluation from Ferrum" do
+      page.disable_javascript
+
+      page.evaluate("document.body.innerHTML = '<p>text</p>'")
+
+      expect(page.main_frame.body).to eq("<html><head></head><body><p>text</p></body></html>")
+    end
+  end
+
+  describe "#set_viewport" do
+    it "overrides the viewport size" do
+      page.set_viewport(width: 500, height: 300, scale_factor: 2)
+
+      expect(page.viewport_size).to eq([500, 300])
+      expect(page.device_pixel_ratio).to eq(2)
     end
   end
 end

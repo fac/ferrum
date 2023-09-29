@@ -1,4 +1,56 @@
-## [Unreleased](https://github.com/rubycdp/ferrum/compare/v0.12...main) ##
+## [Unreleased](https://github.com/rubycdp/ferrum/compare/v0.14...main) ##
+
+### Added
+- `Ferrum::Page#disable_javascript` disables the JavaScript from the HTML source
+- `Ferrum::Page#set_viewport` emulates the viewport
+
+### Changed
+
+### Fixed
+
+### Removed
+
+
+## [0.14](https://github.com/rubycdp/ferrum/compare/v0.13...v0.14) - (Sep 14, 2023) ##
+
+### Added
+- `Ferrum::Page#device_pixel_ratio` returns the ratio of the resolution in physical pixels to the
+  resolution in CSS pixels for the current display device.
+- `Ferrum::Network#cache(disable: true | false)` whether or not to use cache for every request
+- `Ferrum::Network::Exchange#redirect?` determines if the exchange is a redirect
+- `Ferrum::Network::Exchange#xhr?` determines if the exchange is XHR
+- `Ferrum::Network::Request#xhr?` determines if the request is XHR
+- `Ferrum::Network::Response#loaded?` returns true if the response is fully loaded
+- `Ferrum::Network::Response#redirect?` returns true if the response is a redirect
+- `Ferrum::Node#in_viewport?` checks if the element in viewport (optional argument `scope` as `Ferrum::Node`)
+- `Ferrum::Node#scroll_into_view` - scrolls to element if needed (when it's not in the viewport)
+- `Ferrum::Cookies#each` - is now Enumerable and supports `each` method
+- `Ferrum::Cookies::Cookie`
+  - `#priority`
+  - `#sameparty?`
+  - `#source_scheme`
+  - `#source_port`
+  - `#to_s`
+  - `#to_h`
+- `Ferrum::Network::Request#to_h`
+- `Ferrum::Network::Response#to_h`
+
+### Changed
+
+### Fixed
+- `Ferrum::Network::Exchange#finished?` returns `true` only fully loaded responses
+- `Ferrum::Page#resize` set deviceScaleFactor as `0` by default [#330]
+- `Ferrum::Network#intercept` silently discards unknown resource_types [#313]
+- Truncated Chrome WS URL results in Ferrum::DeadBrowserError [#327]
+- Websocket connection remains indefinitely in :connecting state and causes TimeoutError [#329]
+- `Exchange#navigation_request?` Handle nil request [#339]
+- Raise `Ferrum::StatusError` for any top frame navigation error [#341]
+- `Ferrum::Network::Response#loaded?` for redirect response [#338]
+
+### Removed
+
+
+## [0.13](https://github.com/rubycdp/ferrum/compare/v0.12...v0.13) - (Nov 12, 2022) ##
 
 ### Added
 
@@ -77,11 +129,10 @@ a block with this page, after which the page is closed.
 
 - `Ferrum::Node#selected`, `Ferrum::Node#select` to work in frame scope
 
+### Removed
+
+
 ## [0.11](https://github.com/rubycdp/ferrum/compare/v0.10.2...v0.11) - (Mar 11, 2021) ##
-
-### Fixed
-
-- Typo `Ferrum::Page::Screenshot::PAPEP_FORMATS` -> `Ferrum::Page::Screenshot::PAPER_FORMATS`
 
 ### Added
 
@@ -105,31 +156,40 @@ a block with this page, after which the page is closed.
 - `Ferrum::Node::MOVING_ATTEMPTS` -> `Ferrum::Node::MOVING_WAIT_ATTEMPTS`
 - `Concurrent::Hash` -> `Concurrent::Map` in contexts
 
+### Fixed
+
+- Typo `Ferrum::Page::Screenshot::PAPEP_FORMATS` -> `Ferrum::Page::Screenshot::PAPER_FORMATS`
+
+### Removed
+
 
 ## [0.10.2](https://github.com/rubycdp/ferrum/compare/v0.10.1...v0.10.2) - (Feb 24, 2021) ##
+
+### Added
+
+### Changed
 
 ### Fixed
 
 - Set `Ferrum::Page` `@event` when setting up main frame
 
+### Removed
+
 
 ## [0.10.1](https://github.com/rubycdp/ferrum/compare/v0.10...v0.10.1) - (Feb 24, 2021) ##
+
+### Added
+
+### Changed
 
 ### Fixed
 
 - Don't mutate options in `Ferrum::Frame::Runtime#call`
 
+### Removed
+
 
 ## [0.10](https://github.com/rubycdp/ferrum/compare/v0.9...v0.10) - (Feb 23, 2021) ##
-
-### Fixed
-
-- `execution_id` in Runtime is called with retry
-- Main frame is set correct under some circumstances
-- `Network.loadingFailed` event is added to catch canceled requests
-- `detectCycle` for cyclic JS objects
-- Fall back to JS when finding element position with `get_content_quads`
-- Temporary user-data-dir is removed after `Ferrum::Browser::Process#stop`
 
 ### Added
 
@@ -146,36 +206,42 @@ a block with this page, after which the page is closed.
 - `Ferrum::Browser::Network#authorize` now accepts block
 - `Ferrum::Page#pdf` method now streams file with `transferMode: "ReturnAsStream"` mode good for large files
 
+### Fixed
+
+- `execution_id` in Runtime is called with retry
+- Main frame is set correct under some circumstances
+- `Network.loadingFailed` event is added to catch canceled requests
+- `detectCycle` for cyclic JS objects
+- Fall back to JS when finding element position with `get_content_quads`
+- Temporary user-data-dir is removed after `Ferrum::Browser::Process#stop`
+
 ### Removed
 
 
 ## [0.9](https://github.com/rubycdp/ferrum/compare/v0.8...v0.9) - (Jul 24, 2020) ##
 
-### Fixed
-
-- `Ferrum::Network::Request#respond` can accept content longer than 45 chars
-- `Ferrum::Browser::Subscriber` is thread safe
-
 ### Added
 
 - `Ferrum::NodeIsMovingError` to raise error when node is moving before clicking
 - `FERRUM_NODE_MOVING_WAIT` and `FERRUM_NODE_MOVING_ATTEMPTS` envs are added to wait until node stops moving with
-at least `n` attempts
+  at least `n` attempts
 - `Ferrum::Page#wait_for_reload` waits until page is reloaded
 - `:ignore_default_browser_options` option is added to `Ferrum::Browser` to exclude Ferrum's defaults
 - XVFB support
 - `Ferrum::Runtime::CyclicObject` is returned when JS object cannot be represented in Ruby
 - `FERRUM_LOGGING_SCREENSHOTS` env is added to skip showing Base64 screenshots in logger
 
-
-## [0.8](https://github.com/rubycdp/ferrum/compare/v0.7...v0.8) - (Apr 7, 2020) ##
+### Changed
 
 ### Fixed
 
-- `Ferrum::Frame#execution_id` should be set only once
-- `Ferrum::Page#doctype` can be nil
-- Add `:slowmoable` option to all methods with visual representation
-- `Ferrum::Page#screenshot` works for html tag set with 100% width and height
+- `Ferrum::Network::Request#respond` can accept content longer than 45 chars
+- `Ferrum::Browser::Subscriber` is thread safe
+
+### Removed
+
+
+## [0.8](https://github.com/rubycdp/ferrum/compare/v0.7...v0.8) - (Apr 7, 2020) ##
 
 ### Added
 
@@ -197,6 +263,13 @@ at least `n` attempts
 - `Ferrum::Mouse#move` supports steps as option `:steps`
 - Delegate`current_title` to page
 - `Ferrum::Browser::Cookies#set` supports `:httponly` and `:samesite` options
+
+### Fixed
+
+- `Ferrum::Frame#execution_id` should be set only once
+- `Ferrum::Page#doctype` can be nil
+- Add `:slowmoable` option to all methods with visual representation
+- `Ferrum::Page#screenshot` works for html tag set with 100% width and height
 
 ### Removed
 
@@ -238,6 +311,8 @@ at least `n` attempts
 - `Ferrum::StatusError#pendings` now shows all pending connections when time is out
 - `Ferrum::Browser::Process#path` is delegated to `Command`
 
+### Fixed
+
 ### Removed
 
 - Stop listening to `Page.domContentEventFired`, `Page.frameScheduledNavigation` and
@@ -253,6 +328,12 @@ at least `n` attempts
   - `#maybe_sleep_if_new_window` - sleep with `Ferrum::Target::NEW_WINDOW_WAIT` seconds by `Ferrum::Target#window?`
   condition
 
+### Changed
+
+### Fixed
+
+### Removed
+
 
 ## [0.6.1](https://github.com/rubycdp/ferrum/compare/v0.6...v0.6.1) - (Oct 30, 2019) ##
 
@@ -266,6 +347,10 @@ current class instance
 - `Ferrum::Page::Frames` - fix missing frame:
   - `#frame_by` - optional argument `execution_id` removed with change subscriber to search by
   `Ferrum::Frame#execution_id?`
+
+### Fixed
+
+### Removed
 
 
 ## [0.6.0](https://github.com/rubycdp/ferrum/compare/v0.5...v0.6) - (Oct 29, 2019) ##
@@ -363,6 +448,8 @@ current class instance
   - `#resize` - evaluate JS: document.documentElement.scrollWidth, document.documentElement.scrollHeight for
   fullscreen case
 
+### Fixed
+
 ### Removed
 
 - `Ferrum::Page`
@@ -455,6 +542,8 @@ object
 - `Ferrum::Browser#page` - from the instance of `Ferrum::Browser#targets` into delegation
 to `Ferrum::Browser#default_context`
 
+### Fixed
+
 ### Removed
 
 - `Ferrum::EmptyTargetsError`
@@ -511,6 +600,8 @@ with addition of `traffic` clear by the argument as symbol type of `traffic/cach
 - `Ferrum::Network::Request#time` - use `wallTime` params fir time detection
 - `body_size` attribute writer of `Ferrum::Network::Response` with reduce of size on headers_size
 to handle `encodedDataLength` when `Network.responseReceived` is not dispatched
+
+### Fixed
 
 ### Removed
 
@@ -573,6 +664,8 @@ as default value
 - `Ferrum::Page::NEW_WINDOW_BUG_SLEEP` into `Ferrum::Page::NEW_WINDOW_WAIT` as `FERRUM_NEW_WINDOW_WAIT` `ENV-var`
 with `0.3` as default value
 
+### Fixed
+
 ### Removed
 
 - `Ferrum::Page::Input`
@@ -597,6 +690,10 @@ with `0.3` as default value
 
 - increased `Browser::Process::PROCESS_TIMEOUT` constant by 1
 - `Ferrum::Network::InterceptedRequest#match?` to handle cases for `Ruby 2.3` and less
+
+### Fixed
+
+### Removed
 
 
 ## [0.2.0](https://github.com/rubycdp/ferrum/compare/v0.1.2...v0.2) - (Sep 3, 2019) ##
@@ -655,6 +752,8 @@ by passed interception_id
 - `Ferrum::Node::#click` getting the `mode` argument as option with `right/double/left` cases
 - `Ferrum::Page::Frame#switch_to_frame` into `Ferrum::Page::Frame#within_frame` with added case of `ArgumentError`
 
+### Fixed
+
 ### Removed
 
 - `Ferrum::ObsoleteNode` error
@@ -691,6 +790,10 @@ by passed interception_id
 - `Ferrum::Page::Runtime#evaluate_on` - fires `Runtime.callFunctionOn` command
 with `functionDeclaration` on `Ferrum::Page`
 
+### Changed
+
+### Fixed
+
 ### Removed
 
 - `Ferrum::Page::Runtime#evaluate_in`
@@ -702,6 +805,12 @@ with `functionDeclaration` on `Ferrum::Page`
 
 - stringify the `url` which passed to `Ferrum::Page#goto`
 
+### Changed
+
+### Fixed
+
+### Removed
+
 
 ## [0.1.0](https://github.com/rubycdp/ferrum/compare/v0.1.0.alpha...v0.1.0) - (Aug 26, 2019) ##
 
@@ -712,6 +821,10 @@ with `functionDeclaration` on `Ferrum::Page`
 ### Changed
 
 - basic description in README
+
+### Fixed
+
+### Removed
 
 
 ## [0.1.0.alpha](https://github.com/rubycdp/ferrum/releases/tag/v0.1.0.alpha) - (Aug 2, 2019) ##
@@ -727,3 +840,9 @@ with `functionDeclaration` on `Ferrum::Page`
   - `Ferrum::Page` - basic object of the command references, which included `DOM`, network and browser logic
   - `Ferrum::Targets` - initialize of the `window` manager with a clean browser state
   - classes of errors with a description of specific reason
+
+### Changed
+
+### Fixed
+
+### Removed

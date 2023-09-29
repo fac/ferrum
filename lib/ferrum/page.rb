@@ -114,14 +114,8 @@ module Ferrum
       options = { url: combine_url!(url) }
       options.merge!(referrer: referrer) if referrer
       response = command("Page.navigate", wait: GOTO_WAIT, **options)
-      # https://cs.chromium.org/chromium/src/net/base/net_error_list.h
-      if %w[net::ERR_NAME_NOT_RESOLVED
-            net::ERR_NAME_RESOLUTION_FAILED
-            net::ERR_INTERNET_DISCONNECTED
-            net::ERR_CONNECTION_TIMED_OUT
-            net::ERR_FILE_NOT_FOUND].include?(response["errorText"])
-        raise StatusError, options[:url]
-      end
+      error_text = response["errorText"]
+      raise StatusError.new(options[:url], "Request to #{options[:url]} failed (#{error_text})") if error_text
 
       response["frameId"]
     rescue TimeoutError
@@ -139,6 +133,30 @@ module Ferrum
       @client.close
     end
 
+    #
+    # Overrides device screen dimensions and emulates viewport according to parameters
+    #
+    # Read more [here](https://chromedevtools.github.io/devtools-protocol/tot/Emulation/#method-setDeviceMetricsOverride).
+    #
+    # @param [Integer] width width value in pixels. 0 disables the override
+    #
+    # @param [Integer] height height value in pixels. 0 disables the override
+    #
+    # @param [Float] scale_factor device scale factor value. 0 disables the override
+    #
+    # @param [Boolean] mobile whether to emulate mobile device
+    #
+    def set_viewport(width:, height:, scale_factor: 0, mobile: false)
+      command(
+        "Emulation.setDeviceMetricsOverride",
+        slowmoable: true,
+        width: width,
+        height: height,
+        deviceScaleFactor: scale_factor,
+        mobile: mobile
+      )
+    end
+
     def resize(width: nil, height: nil, fullscreen: false)
       if fullscreen
         width, height = document_size
@@ -148,12 +166,16 @@ module Ferrum
         set_window_bounds(width: width, height: height)
       end
 
-      command("Emulation.setDeviceMetricsOverride", slowmoable: true,
-                                                    width: width,
-                                                    height: height,
-                                                    deviceScaleFactor: 1,
-                                                    mobile: false,
-                                                    fitWindow: false)
+      set_viewport(width: width, height: height)
+    end
+
+    #
+    # Disables JavaScript execution from the HTML source for the page.
+    #
+    # This doesn't prevent users evaluate JavaScript with Ferrum.
+    #
+    def disable_javascript
+      command("Emulation.setScriptExecutionDisabled", value: true)
     end
 
     #
@@ -325,6 +347,10 @@ module Ferrum
       use_proxy? && @proxy_user && @proxy_password
     end
 
+    def document_node_id
+      command("DOM.getDocument", depth: 0).dig("root", "nodeId")
+    end
+
     private
 
     def subscribe
@@ -350,7 +376,7 @@ module Ferrum
       on(:dialog) do |dialog, _index, total|
         if total == 1
           warn "Dialog was shown but you didn't provide `on(:dialog)` callback, accepting it by default. " \
-               "Please take a look at https://github.com/rubycdp/ferrum#dialog"
+               "Please take a look at https://github.com/rubycdp/ferrum#dialogs"
           dialog.accept
         end
       end
@@ -393,7 +419,8 @@ module Ferrum
       resize(width: width, height: height)
 
       response = command("Page.getNavigationHistory")
-      return unless response.dig("entries", 0, "transitionType") != "typed"
+      transition_type = response.dig("entries", 0, "transitionType")
+      return if transition_type == "auto_toplevel"
 
       # If we create page by clicking links, submitting forms and so on it
       # opens a new window for which `frameStoppedLoading` event never
@@ -439,10 +466,6 @@ module Ferrum
       end
 
       (nil_or_relative ? @browser.base_url.join(url.to_s) : url).to_s
-    end
-
-    def document_node_id
-      command("DOM.getDocument", depth: 0).dig("root", "nodeId")
     end
 
     def ws_url

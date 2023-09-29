@@ -18,8 +18,13 @@ module Ferrum
       # @return [Hash{String => Object}]
       attr_reader :params
 
+      # The response is fully loaded by the browser.
       #
-      # Initializes the respones object.
+      # @return [Boolean]
+      attr_writer :loaded
+
+      #
+      # Initializes the responses object.
       #
       # @param [Page] page
       #   The page associated with the network response.
@@ -121,9 +126,8 @@ module Ferrum
       #
       def body
         @body ||= begin
-          body, encoded = @page
-                          .command("Network.getResponseBody", requestId: id)
-                          .values_at("body", "base64Encoded")
+          body, encoded = @page.command("Network.getResponseBody", requestId: id)
+                               .values_at("body", "base64Encoded")
           encoded ? Base64.decode64(body) : body
         end
       end
@@ -135,8 +139,22 @@ module Ferrum
         @page.network.response == self
       end
 
+      # The response is fully loaded by the browser or not.
       #
-      # Comapres the respones ID to another response's ID.
+      # @return [Boolean]
+      def loaded?
+        @loaded
+      end
+
+      # Whether the response is a redirect.
+      #
+      # @return [Boolean]
+      def redirect?
+        params.key?("redirectResponse")
+      end
+
+      #
+      # Compares the response's ID to another response's ID.
       #
       # @return [Boolean]
       #   Indicates whether the response has the same ID as the other response
@@ -154,6 +172,8 @@ module Ferrum
       def inspect
         %(#<#{self.class} @params=#{@params.inspect} @response=#{@response.inspect}>)
       end
+
+      alias to_h params
     end
   end
 end

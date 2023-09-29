@@ -1,5 +1,6 @@
 # frozen_string_literal: true
 
+require "ferrum/network/request_params"
 require "time"
 
 module Ferrum
@@ -9,6 +10,8 @@ module Ferrum
     # object.
     #
     class Request
+      include RequestParams
+
       #
       # Initializes the request object.
       #
@@ -51,48 +54,21 @@ module Ferrum
       end
 
       #
+      # Determines if the request is XHR.
+      #
+      # @return [Boolean]
+      #
+      def xhr?
+        type?("xhr")
+      end
+
+      #
       # The frame ID of the request.
       #
       # @return [String]
       #
       def frame_id
         @params["frameId"]
-      end
-
-      #
-      # The URL for the request.
-      #
-      # @return [String]
-      #
-      def url
-        @request["url"]
-      end
-
-      #
-      # The URL fragment for the request.
-      #
-      # @return [String, nil]
-      #
-      def url_fragment
-        @request["urlFragment"]
-      end
-
-      #
-      # The request method.
-      #
-      # @return [String]
-      #
-      def method
-        @request["method"]
-      end
-
-      #
-      # The request headers.
-      #
-      # @return [Hash{String => String}]
-      #
-      def headers
-        @request["headers"]
       end
 
       #
@@ -105,15 +81,14 @@ module Ferrum
       end
 
       #
-      # The optional HTTP `POST` form data.
+      # Converts the request to a Hash.
       #
-      # @return [String, nil]
-      #   The HTTP `POST` form data.
+      # @return [Hash{String => Object}]
+      #   The params of the request.
       #
-      def post_data
-        @request["postData"]
+      def to_h
+        @params
       end
-      alias body post_data
     end
   end
 end

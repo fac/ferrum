@@ -91,7 +91,12 @@ describe Ferrum::Network::Exchange do
       network.intercept
       page.on(:request) { |r, _, _| r.abort }
 
-      page.go_to
+      expect do
+        page.go_to
+      end.to raise_error(
+        Ferrum::StatusError,
+        %r{Request to http://127.0.0.1:#{server.port} failed \(net::ERR_BLOCKED_BY_CLIENT\)}
+      )
 
       expect(page.body).not_to include("Hello world!")
       expect(last_exchange.blocked?).to be true
@@ -103,6 +108,14 @@ describe Ferrum::Network::Exchange do
       page.go_to
 
       expect(last_exchange.finished?).to be true
+    end
+  end
+
+  describe "#redirect?" do
+    it "determines if exchange is a redirect" do
+      page.go_to("/redirect_again")
+
+      expect(first_exchange.response.redirect?).to be
     end
   end
 

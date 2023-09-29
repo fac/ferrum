@@ -139,6 +139,7 @@ In docker as root you must pass the no-sandbox browser option:
 Ferrum::Browser.new(browser_options: { 'no-sandbox': nil })
 ```
 
+It has also been reported that the Chrome process repeatedly crashes when running inside a Docker container on an M1 Mac preventing Ferrum from working. Ferrum should work as expected when deployed to a Docker container on a non-M1 Mac.
 
 ## Customization
 
@@ -149,7 +150,8 @@ Ferrum::Browser.new(options)
 ```
 
 * options `Hash`
-  * `:headless` (Boolean) - Set browser as headless or not, `true` by default.
+  * `:headless` (String | Boolean) - Set browser as headless or not, `true` by default. You can set `"new"` to support
+      [new headless mode](https://developer.chrome.com/articles/new-headless/).
   * `:xvfb` (Boolean) - Run browser in a virtual framebuffer, `false` by default.
   * `:window_size` (Array) - The dimensions of the browser window in which to
       test, expressed as a 2-element array, e.g. [1024, 768]. Default: [1024, 768]
@@ -600,9 +602,16 @@ Activates offline mode for a page.
 
 ```ruby
 browser.network.offline_mode
-browser.go_to("https://github.com/") # => Ferrum::StatusError (Request to https://github.com/ failed to reach server, check DNS and server status)
+browser.go_to("https://github.com/") # => Ferrum::StatusError (Request to https://github.com/ failed(net::ERR_INTERNET_DISCONNECTED))
 ```
 
+#### cache(disable: `Boolean`)
+
+Toggles ignoring cache for each request. If true, cache will not be used.
+
+```ruby
+browser.network.cache(disable: true)
+```
 
 ## Proxy
 
@@ -905,6 +914,34 @@ browser.evaluate("window.__injected") # => 42
 ```
 
 
+## Emulation
+
+#### disable_javascript
+
+Disables Javascripts from the loaded HTML source.
+You can still evaluate JavaScript with `evaluate` or `execute`.
+Returns nothing.
+
+```ruby
+browser.disable_javascript
+```
+
+
+#### set_viewport
+
+Overrides device screen dimensions and emulates viewport.
+
+* options `Hash`
+  * :width `Integer`, viewport width. `0` by default
+  * :height `Integer`, viewport height. `0` by default
+  * :scale_factor `Float`, device scale factor. `0` by default
+  * :mobile `Boolean`, whether to emulate mobile device. `false` by default
+
+```ruby
+browser.set_viewport(width: 1000, height: 600, scale_factor: 3)
+```
+
+
 ## Frames
 
 #### frames : `Array[Frame] | []`
@@ -1133,6 +1170,8 @@ frame.at_css("//a[text() = 'Log in']") # => Node
 #### evaluate
 #### selected : `Array<Node>`
 #### select
+#### scroll_into_view
+#### in_viewport?(of: `Node | nil`) : `Boolean`
 
 (chainable) Selects options by passed attribute.
 

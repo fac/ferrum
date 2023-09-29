@@ -22,12 +22,13 @@ module Ferrum
                 body doctype content=
                 headers cookies network
                 mouse keyboard
-                screenshot pdf mhtml viewport_size
+                screenshot pdf mhtml viewport_size device_pixel_ratio
                 frames frame_by main_frame
                 evaluate evaluate_on evaluate_async execute evaluate_func
                 add_script_tag add_style_tag bypass_csp
                 on position position=
-                playback_rate playback_rate=] => :page
+                playback_rate playback_rate=
+                disable_javascript set_viewport] => :page
     delegate %i[default_user_agent] => :process
 
     attr_reader :client, :process, :contexts, :options, :window_size, :base_url
@@ -177,7 +178,7 @@ module Ferrum
       block_given? ? yield(page) : page
     ensure
       if block_given?
-        page.close
+        page&.close
         context.dispose if new_context
       end
     end
@@ -237,6 +238,8 @@ module Ferrum
     end
 
     def quit
+      return unless @client
+
       @client.close
       @process.stop
       @client = @process = @contexts = nil
@@ -260,6 +263,10 @@ module Ferrum
     #
     def version
       VersionInfo.new(command("Browser.getVersion"))
+    end
+
+    def headless_new?
+      process&.command&.headless_new?
     end
 
     private

@@ -88,6 +88,26 @@ module Ferrum
       raise NotImplementedError
     end
 
+    def scroll_into_view
+      tap { page.command("DOM.scrollIntoViewIfNeeded", nodeId: node_id) }
+    end
+
+    def in_viewport?(of: nil)
+      function = <<~JS
+        function(element, scope) {
+          const rect = element.getBoundingClientRect();
+          const [height, width] = scope
+            ? [scope.offsetHeight, scope.offsetWidth]
+            : [window.innerHeight, window.innerWidth];
+          return rect.top >= 0 &&
+           rect.left >= 0 &&
+           rect.bottom <= height &&
+           rect.right <= width;
+        }
+      JS
+      page.evaluate_func(function, self, of)
+    end
+
     def select_file(value)
       page.command("DOM.setFileInputFiles", slowmoable: true, nodeId: node_id, files: Array(value))
     end
@@ -208,7 +228,7 @@ module Ferrum
 
     def content_quads
       quads = page.command("DOM.getContentQuads", nodeId: node_id)["quads"]
-      raise CoordinatesNotFoundError, "Node is either not visible or not an HTMLElement" if quads.size.zero?
+      raise CoordinatesNotFoundError, "Node is either not visible or not an HTMLElement" if quads.empty?
 
       quads
     end

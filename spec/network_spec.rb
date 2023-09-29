@@ -23,12 +23,16 @@ describe Ferrum::Network do
 
     it "gets cleared on restart" do
       browser.go_to("/ferrum/with_js")
-      expect(browser.network.traffic.length).to eq(4)
+      # Due to async nature of browser and the timing of favicon.ico request unpredictability
+      # we might get from x to y requests including favicon.ico
+      expect(browser.network.traffic.length).to be_between(4, 5)
 
       browser.restart
 
       browser.go_to("/ferrum/with_js")
-      expect(browser.network.traffic.length).to eq(4)
+      # Due to async nature of browser and the timing of favicon.ico request unpredictability
+      # we might get from x to y requests including favicon.ico
+      expect(browser.network.traffic.length).to be_between(4, 5)
     end
   end
 
@@ -56,8 +60,11 @@ describe Ferrum::Network do
     expect(network.total_connections).to eq(0)
 
     page.go_to("/ferrum/with_ajax_connection_refused")
+    network.wait_for_idle
 
-    expect(network.total_connections).to eq(3)
+    # Due to async nature of browser and the timing of favicon.ico request unpredictability
+    # we might get from x to y requests including favicon.ico
+    expect(network.total_connections).to be_between(3, 4)
   end
 
   it "#finished_connections" do
@@ -66,14 +73,18 @@ describe Ferrum::Network do
     page.go_to("/ferrum/with_ajax_connection_refused")
     network.wait_for_idle
 
-    expect(network.finished_connections).to eq(3)
+    # Due to async nature of browser and the timing of favicon.ico request unpredictability
+    # we might get from x to y requests including favicon.ico
+    expect(network.finished_connections).to be_between(3, 4)
   end
 
   it "#pending_connections" do
     expect(network.pending_connections).to eq(0)
 
     page.go_to("/ferrum/with_slow_ajax_connection")
-    expect(network.pending_connections).to eq(1)
+    # Due to async nature of browser and the timing of favicon.ico request unpredictability
+    # we might get from x to y requests including favicon.ico
+    expect(network.pending_connections).to be_between(1, 2)
 
     network.wait_for_idle
     expect(network.pending_connections).to eq(0)
@@ -302,6 +313,55 @@ describe Ferrum::Network do
   end
 
   describe "#intercept" do
+    it "supports :pattern argument" do
+      network.intercept(pattern: "*/ferrum/frame_child")
+      page.on(:request) do |request|
+        request.respond(body: "<h1>hello</h1>")
+      end
+
+      page.go_to("/ferrum/frame_parent")
+
+      expect(network.status).to eq(200)
+      frame = page.at_xpath("//iframe").frame
+      expect(frame.body).to include("hello")
+    end
+
+    context "with :resource_type argument" do
+      it "raises an error with wrong type" do
+        expect { network.intercept(resource_type: :BlaBla) }.to raise_error(ArgumentError)
+      end
+
+      it "intercepts only given type" do
+        network.intercept(resource_type: :Document)
+        page.on(:request) do |request|
+          request.respond(body: "<h1>hello</h1>")
+        end
+
+        page.go_to("/ferrum/non_existing")
+
+        expect(network.status).to eq(200)
+        expect(page.body).to include("hello")
+      end
+    end
+
+    context "with :request_stage argument" do
+      it "raises an error with wrong stage" do
+        expect { network.intercept(request_stage: :BlaBla) }.to raise_error(ArgumentError)
+      end
+
+      it "intercepts only given stage" do
+        network.intercept(request_stage: :Response)
+        page.on(:request) do |request|
+          request.respond(body: "<h1>hello</h1>")
+        end
+
+        page.go_to("/ferrum/index")
+
+        expect(network.status).to eq(200)
+        expect(page.body).to include("hello")
+      end
+    end
+
     it "supports custom responses" do
       network.intercept
       page.on(:request) do |request|
@@ -340,7 +400,14 @@ describe Ferrum::Network do
     end
 
     it "denies without credentials" do
-      page.go_to("/ferrum/basic_auth")
+      if browser.headless_new?
+        expect { page.go_to("/ferrum/basic_auth") }.to raise_error(
+          Ferrum::StatusError,
+          %r{Request to http://.*/ferrum/basic_auth failed \(net::ERR_INVALID_AUTH_CREDENTIALS\)}
+        )
+      else
+        page.go_to("/ferrum/basic_auth")
+      end
 
       expect(network.status).to eq(401)
       expect(page.body).not_to include("Welcome, authenticated client")
@@ -407,9 +474,9 @@ describe Ferrum::Network do
 
     expect { page.go_to("/ferrum/with_js") }.to raise_error(
       Ferrum::StatusError,
-      %r{Request to http://.*/ferrum/with_js failed to reach server, check DNS and server status}
+      %r{Request to http://.*/ferrum/with_js failed \(net::ERR_INTERNET_DISCONNECTED\)}
     )
 
-    expect(page.body).to eq("<html><head></head><body></body></html>")
+    expect(page.at_css("body").text).to match("No internet") if browser.headless_new?
   end
 end

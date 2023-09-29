@@ -51,7 +51,7 @@ module Ferrum
       # @return [Boolean]
       #
       def navigation_request?(frame_id)
-        request.type?(:document) && request&.frame_id == frame_id
+        request&.type?(:document) && request&.frame_id == frame_id
       end
 
       #
@@ -79,7 +79,7 @@ module Ferrum
       # @return [Boolean]
       #
       def finished?
-        blocked? || !response.nil? || !error.nil?
+        blocked? || response&.loaded? || !error.nil?
       end
 
       #
@@ -98,6 +98,24 @@ module Ferrum
       #
       def intercepted?
         !intercepted_request.nil?
+      end
+
+      #
+      # Determines if the exchange is XHR.
+      #
+      # @return [Boolean]
+      #
+      def xhr?
+        !!request&.xhr?
+      end
+
+      #
+      # Determines if the exchange is a redirect.
+      #
+      # @return [Boolean]
+      #
+      def redirect?
+        response&.redirect?
       end
 
       #

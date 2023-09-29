@@ -73,6 +73,15 @@ describe Ferrum::Network::Response do
     end
   end
 
+  describe "#redirect?" do
+    it "captures errors" do
+      page.go_to("/redirect_again")
+
+      expect(page.body).to include("You landed")
+      expect(first_exchange.response.redirect?).to be
+    end
+  end
+
   describe "#body_size" do
     it "counts network traffic for each loaded resource" do
       page.go_to("/ferrum/with_js")
@@ -81,12 +90,20 @@ describe Ferrum::Network::Response do
         %r{/ferrum/jquery.min.js$} => File.size("#{PROJECT_ROOT}/spec/support/public/jquery-1.11.3.min.js"),
         %r{/ferrum/jquery-ui.min.js$} => File.size("#{PROJECT_ROOT}/spec/support/public/jquery-ui-1.11.4.min.js"),
         %r{/ferrum/test.js$} => File.size("#{PROJECT_ROOT}/spec/support/public/test.js"),
-        %r{/ferrum/with_js$} => 2343
+        %r{/ferrum/with_js$} => 2312
       }
 
       resources_size.each do |resource, size|
         expect(responses.find { |r| r.url[resource] }.body_size).to eq(size)
       end
+    end
+  end
+
+  describe "#to_h" do
+    it "must return #params" do
+      page.go_to("/ferrum/with_js")
+
+      expect(last_exchange.response.to_h).to eq(last_exchange.response.params)
     end
   end
 end
