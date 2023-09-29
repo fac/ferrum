@@ -43,7 +43,7 @@ module Ferrum
         @pendings.delete(message[:id])
 
         raise DeadBrowserError if data.nil? && @ws.messages.closed?
-        raise TimeoutError unless data
+        raise TimeoutError.new() unless data
 
         error, response = data.values_at("error", "result")
         raise_browser_error(error) if error

@@ -27,11 +27,17 @@ module Ferrum
   end
 
   class TimeoutError < Error
-    def message
-      "Timed out waiting for response. It's possible that this happened " \
-        "because something took a very long time (for example a page load " \
-        "was slow). If so, setting the :timeout option to a higher value might " \
-        "help."
+    attr_reader :pending_connections_info
+
+    def initialize(pending_connections_info = [])
+      @pending_connections_info = pending_connections_info
+
+      message = "Timed out waiting for response. It's possible that this happened " \
+                "because something took a very long time (for example a page load " \
+                "was slow). If so, setting the :timeout option to a higher value might " \
+                "help."
+      message = "#{message}\nConnections still pending:\n #{pending_connections_info.join(', ')}" unless pending_connections_info.empty?
+      super(message)
     end
   end
 

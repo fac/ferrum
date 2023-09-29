@@ -63,7 +63,15 @@ module Ferrum
       start = Utils::ElapsedTime.monotonic_time
 
       until idle?(connections)
-        raise TimeoutError if Utils::ElapsedTime.timeout?(start, timeout)
+        if Utils::ElapsedTime.timeout?(start, timeout)
+          if @page.browser.options.pending_connection_errors
+            pending_connections = traffic.select(&:pending?)
+            pending_connections_info = pending_connections.map(&:response).map do |connection|
+              {status: connection.status, status_text: connection.status_text, url: connection.url } unless connection.nil?
+            end
+          end
+          raise TimeoutError.new(pending_connections_info = pending_connections_info)
+        end
 
         sleep(duration)
       end
